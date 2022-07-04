@@ -18,11 +18,23 @@ import matplotlib.pyplot as plt
 dir = 'Data_and_model/Data_and_model/EC_data_4m/'
 os.chdir(dir)
 
+with open('re_s_y_train_scaled_az', 'rb') as filename:
+  s_y_train_scaled = pickle.load(filename)
+
+with open('re_s_x_test_scaled_az', 'rb') as filename:
+  s_x_test_scaled = pickle.load(filename)
+
+with open('re_s_y_test_scaled_az', 'rb') as filename:
+  s_y_test_scaled = pickle.load(filename)
+
 with open('re_y_sScaler_az', 'rb') as filename:
   s_y_sScaler = pickle.load(filename)
 
 with open('re_x_sScaler_az', 'rb') as filename:
   s_x_sScaler = pickle.load(filename)
+
+with open('EC_para_200k_outtest', 'rb') as filename:
+  s_x_outtest = pickle.load(filename)
 
 with open('para_changing_r_feature', 'rb') as filename:
   s_x_test_r = pickle.load(filename)
@@ -36,9 +48,19 @@ with open('para_changing_z_feature', 'rb') as filename:
 with open('output_field_az_changing_z_feature', 'rb') as filename:
   s_y_test_z = pickle.load(filename)
 
+with open('EC_output_field_200k_outtest', 'rb') as filename:
+  s_y_outtest = pickle.load(filename)
+  outtest = []
+for elem in s_y_outtest:
+  outtest.append([elem[1]])
+s_y_outtest = np.array(outtest)
+print(s_y_outtest.shape)
+
+s_y_train = s_y_sScaler.inverse_transform(s_y_train_scaled)
+s_y_test = s_y_sScaler.inverse_transform(s_y_test_scaled)
+s_x_outtest_scaled = s_x_sScaler.transform(s_x_outtest)
 s_x_test_r_scaled = s_x_sScaler.transform(s_x_test_r)
 s_x_test_z_scaled = s_x_sScaler.transform(s_x_test_z)
-
 def NLL(y_true, y_pred):
   return -y_pred.log_prob(y_true) 
 
