@@ -42,8 +42,52 @@ s_x_test_z_scaled = s_x_sScaler.transform(s_x_test_z)
 def NLL(y_true, y_pred):
   return -y_pred.log_prob(y_true) 
 
+def prior(kernel_size, bias_size, dtype=None):
+    n = kernel_size + bias_size
+    prior_model = Sequential(
+        [
+            tfpl.DistributionLambda(
+                lambda t: tfd.MultivariateNormalDiag(   
+                    loc=tf.zeros(n), scale_diag=tf.ones(n)
+                )
+            )
+        ]
+    )
+    return prior_model
 
-def model_init():
+def posterior(kernel_size, bias_size, dtype=None):
+    n = kernel_size + bias_size
+    posterior_model = Sequential(
+        [
+            tfpl.VariableLayer(
+                tfpl.MultivariateNormalTriL.params_size(n), dtype=dtype
+            ),
+            tfpl.MultivariateNormalTriL(n),
+        ]
+    )
+    return posterior_model
+
+def PBNN_model_init():
+  model = Sequential([
+        tfpl.DenseVariational (
+                  units = 796,
+                  make_prior_fn = prior, make_posterior_fn = posterior,
+                  kl_weight = 1 / int(len(s_x_train_scaled)/2) , activation = 'sigmoid'),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(796, activation=tf.nn.relu),
+        Dense(units = tfpl.MultivariateNormalTriL.params_size(1)),
+        tfpl.MultivariateNormalTriL(1)   
+  ])
+  return model
+
+def PNN_model_init():
   model = Sequential([
           Dense(796, activation=tf.nn.relu),
           Dense(796, activation=tf.nn.relu),
@@ -60,13 +104,13 @@ def model_init():
   ])
   return model
 
-model = model_init()
+model = PBNN_model_init()
 
 opt = tf.keras.optimizers.Adam()
 
 model.compile(optimizer=opt, loss=NLL)
 
-weight_file = 'PNN_model_checkpoint/PNN_best_weight_noScale_08-39-22_2022-06-22'
+weight_file = 'path-to-weight-file'
 model = model_init()
 y = model(s_x_test_r_scaled)
 model.load_weights(weight_file)
